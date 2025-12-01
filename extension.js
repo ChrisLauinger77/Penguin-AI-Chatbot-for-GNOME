@@ -252,7 +252,15 @@ const Penguin = GObject.registerClass(
             const apiKey = this._settingsManager.getApiKey(provider);
             const model = this._settingsManager.getModel(provider);
 
-            const llmProvider = LLMProviderFactory.createProvider(provider, apiKey, model);
+            // Prepare tool configuration
+            const toolConfig = {
+                serverUrl: this._settingsManager.getToolServerUrl(),
+                weatherLat: this._settingsManager.getWeatherLatitude(),
+                weatherLon: this._settingsManager.getWeatherLongitude(),
+            };
+            
+            const llmProvider = LLMProviderFactory.createProvider(provider, apiKey, model, toolConfig);
+            //const llmProvider = LLMProviderFactory.createProvider(provider, apiKey, model);
 
             llmProvider.sendRequest(this._history, (error, response) => {
                 if (error) {

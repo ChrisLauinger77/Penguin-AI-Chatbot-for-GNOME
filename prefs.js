@@ -23,6 +23,7 @@ export default class PenguinPreferences extends ExtensionPreferences {
      * @param {Adw.PreferencesWindow} window - The preferences window
      */
     fillPreferencesWindow(window) {
+        window.set_default_size(900, 700);
         window._settings = this.getSettings();
         const settingsUI = new SettingsUI(window._settings);
         const page = new Adw.PreferencesPage();
@@ -53,6 +54,7 @@ class SettingsUI {
         this._createModelSection();
         this._createShortcutSection();
         this._createColorSection();
+        this._createToolServerSection();  // <-- NEU HIER EINFÜGEN
         this._createSaveSection();
 
         this.ui.add(this.main);
@@ -104,6 +106,11 @@ class SettingsUI {
 
         // Shortcut
         this.defaultShortcut = this.schema.get_strv(SettingsKeys.OPEN_CHAT_SHORTCUT)[0];
+
+        // Tool server settings
+        this.defaultToolServerUrl = this.schema.get_string(SettingsKeys.TOOL_SERVER_URL);
+        this.defaultWeatherLat = this.schema.get_double(SettingsKeys.WEATHER_LATITUDE);
+        this.defaultWeatherLon = this.schema.get_double(SettingsKeys.WEATHER_LONGITUDE);        
     }
 
     /**
@@ -420,18 +427,68 @@ class SettingsUI {
         this.llmTextColor.set_rgba(llmTextColorGTK);
 
         // Add to grid
-        this.main.attach(labelHumanColor, 0, 9, 1, 1);
-        this.main.attach(this.humanColor, 2, 9, 2, 1);
-
-        this.main.attach(labelHumanTextColor, 0, 10, 1, 1);
-        this.main.attach(this.humanTextColor, 2, 10, 2, 1);
-
-        this.main.attach(labelLLMColor, 0, 11, 1, 1);
-        this.main.attach(this.llmColor, 2, 11, 2, 1);
-
-        this.main.attach(labelLLMTextColor, 0, 12, 1, 1);
-        this.main.attach(this.llmTextColor, 2, 12, 2, 1);
+        this.main.attach(labelHumanColor, 0, 10, 1, 1);      // von 9 → 10
+        this.main.attach(this.humanColor, 2, 10, 2, 1);      // von 9 → 10
+        this.main.attach(labelHumanTextColor, 0, 11, 1, 1);  // bleibt 11
+        this.main.attach(this.humanTextColor, 2, 11, 2, 1);  // bleibt 11
+        this.main.attach(labelLLMColor, 0, 12, 1, 1);        // bleibt 12
+        this.main.attach(this.llmColor, 2, 12, 2, 1);        // bleibt 12
+        this.main.attach(labelLLMTextColor, 0, 13, 1, 1);    // bleibt 13
+        this.main.attach(this.llmTextColor, 2, 13, 2, 1);    // bleibt 13
     }
+
+
+    /**
+     * Create the tool server configuration section
+     * @private
+     */
+    _createToolServerSection() {
+        // Tool Server URL
+        const labelToolServerUrl = new Gtk.Label({
+            label:        _("Tool Server URL:"),
+            halign:       Gtk.Align.START,
+            tooltip_text: _("URL of the local tool server for function calling (weather, search, system info)."),
+        });
+        this.toolServerUrl = new Gtk.Entry({
+            buffer: new Gtk.EntryBuffer(),
+        });
+        this.toolServerUrl.set_placeholder_text(_("e.g., http://127.0.0.1:5000"));
+        this.toolServerUrl.set_text(this.defaultToolServerUrl);
+
+        // Weather Latitude
+        const labelWeatherLat = new Gtk.Label({
+            label:        _("Weather Latitude:"),
+            halign:       Gtk.Align.START,
+            tooltip_text: _("Latitude coordinate for weather queries."),
+        });
+        this.weatherLat = new Gtk.Entry({
+            buffer: new Gtk.EntryBuffer(),
+        });
+        this.weatherLat.set_placeholder_text(_("e.g., 52.52"));
+        this.weatherLat.set_text(this.defaultWeatherLat.toString());
+
+        // Weather Longitude
+        const labelWeatherLon = new Gtk.Label({
+            label:        _("Weather Longitude:"),
+            halign:       Gtk.Align.START,
+            tooltip_text: _("Longitude coordinate for weather queries."),
+        });
+        this.weatherLon = new Gtk.Entry({
+            buffer: new Gtk.EntryBuffer(),
+        });
+        this.weatherLon.set_placeholder_text(_("e.g., 13.41"));
+        this.weatherLon.set_text(this.defaultWeatherLon.toString());
+
+        // Add to grid (rows 13-15, after color section which ends at row 12)
+        this.main.attach(labelToolServerUrl, 0, 14, 1, 1);  // von 13 → 14
+        this.main.attach(this.toolServerUrl, 2, 14, 2, 1);  // von 13 → 14
+        this.main.attach(labelWeatherLat, 0, 15, 1, 1);     // bleibt 15
+        this.main.attach(this.weatherLat, 2, 15, 2, 1);     // bleibt 15
+        this.main.attach(labelWeatherLon, 0, 16, 1, 1);     // von 15 → 16
+        this.main.attach(this.weatherLon, 2, 16, 2, 1);     // von 15 → 16
+    }
+
+
 
     /**
      * Create the keyboard shortcut section
@@ -490,9 +547,9 @@ class SettingsUI {
         });
 
         // Add to grid
-        this.main.attach(labelShortcut, 0, 13, 1, 1);
-        this.main.attach(this.shortcutLabel, 2, 13, 1, 1);
-        this.main.attach(this.shortcutButton, 3, 13, 1, 1);
+        this.main.attach(labelShortcut, 0, 9, 1, 1);      // von 8 → 9
+        this.main.attach(this.shortcutLabel, 2, 9, 1, 1); // von 8 → 9
+        this.main.attach(this.shortcutButton, 3, 9, 1, 1); // von 8 → 9
     }
 
     /**
@@ -513,8 +570,10 @@ class SettingsUI {
         this.saveButton.connect("clicked", () => this._saveSettings());
 
         // Add to grid
-        this.main.attach(this.saveButton, 2, 14, 1, 1);
-        this.main.attach(this.statusLabel, 0, 15, 4, 1);
+        //this.main.attach(this.saveButton, 2, 14, 1, 1);
+        //this.main.attach(this.statusLabel, 0, 15, 4, 1);
+        this.main.attach(this.saveButton, 2, 17, 1, 1);    // von 16 → 17
+        this.main.attach(this.statusLabel, 0, 18, 4, 1);   // bleibt 18
     }
 
     /**
@@ -551,6 +610,11 @@ class SettingsUI {
         this.schema.set_string(SettingsKeys.LLM_MESSAGE_COLOR, `${this.llmColor.get_rgba().to_string()}`);
         this.schema.set_string(SettingsKeys.HUMAN_MESSAGE_TEXT_COLOR, `${this.humanTextColor.get_rgba().to_string()}`);
         this.schema.set_string(SettingsKeys.LLM_MESSAGE_TEXT_COLOR, `${this.llmTextColor.get_rgba().to_string()}`);
+
+        // Save tool server settings
+        this.schema.set_string(SettingsKeys.TOOL_SERVER_URL, this.toolServerUrl.get_buffer().get_text());
+        this.schema.set_double(SettingsKeys.WEATHER_LATITUDE, parseFloat(this.weatherLat.get_buffer().get_text()) || 52.52);
+        this.schema.set_double(SettingsKeys.WEATHER_LONGITUDE, parseFloat(this.weatherLon.get_buffer().get_text()) || 13.41);
 
         // Update status
         this.statusLabel.set_markup(_("Preferences Saved"));

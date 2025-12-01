@@ -93,5 +93,22 @@
         Keyboard shortcut to open the chat window.
       </description>
     </key>
+
+    <key name="tool-server-url" type="s">
+        <default>"http://127.0.0.1:5000"</default>
+        <summary>Tool Server URL</summary>
+        <description>URL of the local tool server for function calling (weather, search, system info).</description>
+    </key>
+    <key name="weather-latitude" type="d">
+        <default>52.52</default>
+        <summary>Weather Location Latitude</summary>
+        <description>Latitude coordinate for weather queries (default: Berlin).</description>
+    </key>
+    <key name="weather-longitude" type="d">
+        <default>13.41</default>
+        <summary>Weather Location Longitude</summary>
+        <description>Longitude coordinate for weather queries (default: Berlin).</description>
+    </key>
+
   </schema>
 </schemalist>

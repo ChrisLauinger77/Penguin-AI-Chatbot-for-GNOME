@@ -6,9 +6,11 @@
   "settings-schema": "org.gnome.shell.extensions.penguin-ai-chatbot",
   "shell-version": [
     "46",
-    "47"
+    "47",
+    "48",
+    "49"
   ],
   "url": "https://martijara.github.io/Penguin-AI-Chatbot-for-GNOME/",
   "uuid": "penguin-ai-chatbot@coffeecionado.gitlab.io",
-  "version": 19
+  "version": 23
 }
