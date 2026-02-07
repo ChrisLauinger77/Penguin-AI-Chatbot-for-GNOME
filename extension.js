@@ -30,7 +30,7 @@ import {
   formatString,
   focusInput,
 } from "./lib/utils.js";
-import { MessageRoles, CSS, UI } from "./lib/constants.js";
+import { MessageRoles, CSS } from "./lib/constants.js";
 import { hideTooltip, showTooltip } from "./lib/tooltip.js";
 import { ToolExecutor } from "./lib/tools.js";
 
@@ -49,6 +49,7 @@ const Penguin = GObject.registerClass(
       this._extension = extension;
       this._settingsManager = new SettingsManager(this._extension.settings);
       this._clipboard = this._extension.clipboard;
+      this._UI = this._extension.UI;
 
       // Load settings
       this._loadSettings();
@@ -94,12 +95,13 @@ const Penguin = GObject.registerClass(
         this._chatBox,
         styleSettings,
         () => this._openSettings(),
+        this._UI,
       );
       this._chatDisplay.setClipboard(this._clipboard);
 
       // Create chat input
       this._chatInput = new St.Entry({
-        hint_text: UI.CHAT_INPUT_PLACEHOLDER,
+        hint_text: this._UI.CHAT_INPUT_PLACEHOLDER,
         can_focus: true,
         track_hover: true,
         style_class: CSS.MESSAGE_INPUT,
@@ -192,7 +194,7 @@ const Penguin = GObject.registerClass(
       }
 
       const input = this._chatInput.get_text();
-      if (!input || input === UI.THINKING_TEXT) {
+      if (!input || input === this._UI.THINKING_TEXT) {
         return;
       }
 
@@ -210,7 +212,7 @@ const Penguin = GObject.registerClass(
 
       // Disable input during processing
       this._chatInput.set_reactive(false);
-      this._chatInput.set_text(UI.THINKING_TEXT);
+      this._chatInput.set_text(this._UI.THINKING_TEXT);
     }
 
     /**
@@ -219,8 +221,8 @@ const Penguin = GObject.registerClass(
      */
     _handleNewConversation() {
       if (
-        this._chatInput.get_text() === UI.NEW_CONVERSATION_TEXT ||
-        this._chatInput.get_text() !== UI.THINKING_TEXT
+        this._chatInput.get_text() === this._UI.NEW_CONVERSATION_TEXT ||
+        this._chatInput.get_text() !== this._UI.THINKING_TEXT
       ) {
         // Clear history
         this._history = [];
@@ -229,7 +231,7 @@ const Penguin = GObject.registerClass(
       } else {
         this._chatDisplay.displayMessage(
           MessageRoles.ASSISTANT,
-          "You can't create a new conversation while I am thinking",
+          this._UI.NEW_CONVERSATION_WHILE_THINKING,
         );
       }
     }
@@ -239,7 +241,7 @@ const Penguin = GObject.registerClass(
      * @private
      */
     _handleNewConversationEnter() {
-      showTooltip("New conversation (Deletes current)");
+      showTooltip(this._UI.NEW_CONVERSATION_TOOLTIP);
     }
 
     /**
@@ -256,7 +258,7 @@ const Penguin = GObject.registerClass(
      */
     _loadHistory() {
       this._chatInput.set_reactive(false);
-      this._chatInput.set_text(UI.LOADING_HISTORY);
+      this._chatInput.set_text(this._UI.LOADING_HISTORY);
 
       this._history = this._settingsManager.getHistory();
       this._chatDisplay.loadHistory(this._history);
@@ -408,17 +410,40 @@ const Penguin = GObject.registerClass(
  */
 export default class PenguinExtension extends Extension {
   enable() {
+    // UI text constants
+    const UI = {
+      CHAT_INPUT_PLACEHOLDER: _("Chat with me"),
+      THINKING_TEXT: _("I am thinking..."),
+      NEW_CONVERSATION_TEXT: _("Create a new conversation (Deletes current)"),
+      COPY_TEXT_HINT: _("Click on text to copy"),
+      LOADING_HISTORY: _("Loading history..."),
+      ERROR_API_KEY: _(
+        "Hmm, an error occurred when trying to reach out to the assistant.\nCheck your API key and model settings for {0} and try again. It could also be your internet connection!",
+      ),
+      ERROR_GENERIC: _(
+        "We are having trouble getting a response from the assistant. \nHere is the error - if it helps at all: \n\n{0} \n\nSome tips:\n\n- Check your internet connection\n- If you recently changed your provider, try deleting your history.",
+      ),
+
+      SETTINGS_BUTTON_TEXT: _("Click here to go to settings"),
+      PREFERENCES_SAVED: _("Preferences Saved"),
+      SAVE_PREFERENCES: _("Save Preferences"),
+      SAVE_PREFERENCES_HINT: _(
+        "Click 'Save Preferences' to apply your changes.",
+      ),
+    };
     this._penguin = new Penguin({
       settings: this.getSettings(),
       openSettings: this.openPreferences,
       clipboard: St.Clipboard.get_default(),
       uuid: this.uuid,
+      UI: UI,
     });
 
     Main.panel.addToStatusArea(this.uuid, this._penguin);
   }
 
   disable() {
+    this._UI = null;
     this._penguin.destroy();
     this._penguin = null;
   }
