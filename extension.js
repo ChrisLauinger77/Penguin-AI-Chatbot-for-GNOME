@@ -12,6 +12,7 @@
 import GObject from "gi://GObject";
 import St from "gi://St";
 import GLib from "gi://GLib";
+import Clutter from "gi://Clutter";
 
 import {
   Extension,
@@ -67,6 +68,17 @@ const Penguin = GObject.registerClass(
       // Initialize history
       this._history = [];
       this._loadHistory();
+      // middle click opens settings
+      this.connect("button-press-event", (actor, event) => {
+        if (event.get_button() === Clutter.BUTTON_MIDDLE) {
+          this._openSettings();
+          this.menu.close();
+          this._chatLabel?.set_text(
+            this._settingsManager.getLLMProvider().toUpperCase(),
+          );
+        }
+        return Clutter.EVENT_STOP;
+      });
     }
 
     /**
@@ -98,7 +110,11 @@ const Penguin = GObject.registerClass(
         this._UI,
       );
       this._chatDisplay.setClipboard(this._clipboard);
-
+      // create chat label
+      this._chatLabel = new St.Label({
+        text: this._settingsManager.getLLMProvider().toUpperCase(),
+        style: "font-weight: bold; font-size: 14px; margin-bottom: 10px;",
+      });
       // Create chat input
       this._chatInput = new St.Entry({
         hint_text: this._UI.CHAT_INPUT_PLACEHOLDER,
@@ -139,6 +155,7 @@ const Penguin = GObject.registerClass(
         vertical: false,
         style_class: CSS.POPUP_MENU_BOX,
       });
+
       entryBox.add_child(this._chatInput);
       entryBox.add_child(this._newConversationButton);
 
@@ -155,6 +172,7 @@ const Penguin = GObject.registerClass(
         vertical: true,
         style_class: CSS.POPUP_MENU_BOX,
       });
+      layout.add_child(this._chatLabel);
       layout.add_child(this._chatView);
       layout.add_child(entryBox);
 
@@ -375,7 +393,7 @@ const Penguin = GObject.registerClass(
      * @private
      */
     _openSettings() {
-      this._extension.openPreferences();
+      this._extension.openSettings();
     }
 
     /**
