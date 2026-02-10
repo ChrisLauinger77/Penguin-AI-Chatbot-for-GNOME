@@ -33,7 +33,6 @@ import {
 } from "./lib/utils.js";
 import { MessageRoles, CSS } from "./lib/constants.js";
 import { hideTooltip, showTooltip } from "./lib/tooltip.js";
-import { ToolExecutor } from "./lib/tools.js";
 
 /**
  * Main extension class that handles the chat interface
@@ -45,7 +44,7 @@ const Penguin = GObject.registerClass(
      * @param {object} params - Initialization parameters
      */
     _init(extension) {
-      super._init(0.0, _("Penguin: AI Chatbot"));
+      super._init(0, _("Penguin: AI Chatbot"));
 
       this._extension = extension;
       this._settingsManager = new SettingsManager(this._extension.settings);
@@ -308,12 +307,11 @@ const Penguin = GObject.registerClass(
         model,
         toolConfig,
       );
-      //const llmProvider = LLMProviderFactory.createProvider(provider, apiKey, model);
 
       llmProvider.sendRequest(this._history, (error, response) => {
         if (error) {
           let errorMessage;
-          if (error.message && error.message.includes("HTTP error")) {
+          if (error.message?.includes("HTTP error")) {
             errorMessage = formatString(UI.ERROR_API_KEY, provider);
           } else {
             errorMessage = formatString(UI.ERROR_GENERIC, error.toString());
@@ -413,11 +411,9 @@ const Penguin = GObject.registerClass(
       this._unbindShortcut();
       this._settingsManager.disconnectAll();
       this._chatDisplay.destroy();
-      ToolExecutor.destroy();
 
       hideTooltip();
 
-      this.abort();
       super.destroy();
     }
   },
